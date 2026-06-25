@@ -1,0 +1,57 @@
+name: Release (Tauri desktop)
+
+# 태그 push (v*) 또는 수동 실행 시 macOS / Windows 데스크톱 위젯을 빌드해
+# GitHub Releases에 .dmg / .msi(.exe) 산출물을 업로드한다.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+          - platform: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build & release (tauri-action)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', github.run_number) }}
+          releaseName: '페이틱 위젯 ${{ github.ref_type == ''tag'' && github.ref_name || github.run_number }}'
+          releaseBody: '실시간 월급 카운터 데스크톱 위젯. macOS는 .dmg, Windows는 .msi/.exe를 받으세요.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
