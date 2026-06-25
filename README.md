@@ -1,0 +1,60 @@
+# 페이틱 (pay-tick) 💸
+
+> 출근한 순간부터 "지금 이 순간 내가 얼마 벌고 있는지" 초 단위로 차오르는 실시간 월급 카운터
+
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38BDF8?logo=tailwindcss&logoColor=white)
+
+🔗 **라이브 데모: https://pay-tick.vercel.app**
+
+![앱 스크린샷](docs/screenshot.png)
+
+## 소개
+
+연봉·월급·시급과 근무 시간만 입력하면, 출근한 시점부터 지금까지 번 돈이
+소수점까지 실시간으로 빠르게 올라갑니다. 점심시간엔 카운터도 같이 쉬어요.
+캡처해서 SNS에 자랑하기 좋은 정사각 결과 카드도 만들어 줍니다.
+
+## ✨ 주요 기능
+
+- ⏱️ **실시간 카운트업** — `requestAnimationFrame` 기반 ~60fps로 소수점 둘째 자리까지 부드럽게 증가
+- 💰 **유연한 입력** — 연봉 / 월급 / 시급 중 선택, 프리셋 버튼 제공
+- 🕘 **근무 형태 설정** — 출근·퇴근 시각, 점심시간 제외, 주 근무일(1~7일)
+- 📊 **상세 지표** — 초당·분당·시간당 수입, 오늘 일급 대비 진행률 바
+- 🧭 **남은 시간 안내** — "퇴근까지 X시간 Y분, 앞으로 OO원 더 번다"
+- 🛒 **재미 환산** — 지금까지 번 돈으로 살 수 있는 삼각김밥·아메리카노·치킨 개수
+- 📸 **결과 카드 공유** — 인스타·카톡용 1080×1080 정사각 카드 PNG로 저장/공유
+- 💾 **자동 저장** — 입력값은 localStorage에 저장되어 재방문 시 그대로 유지
+- 🔒 **완전 클라이언트** — 모든 계산은 브라우저에서만, 서버 전송 없음
+
+## 🛠 기술 스택
+
+- React 19 + TypeScript
+- Vite 8
+- Tailwind CSS v4 (`@tailwindcss/vite`)
+- html-to-image (결과 카드 캡처)
+- Pretendard 폰트
+
+## 🚀 로컬 실행
+
+```bash
+npm install && npm run dev
+```
+
+빌드:
+
+```bash
+npm run build && npm run preview
+```
+
+## 📁 계산 로직
+
+- `src/lib/salary.ts` — 연봉/월급/시급을 초당 수입으로 환산하고, 점심시간을 제외한
+  유효 근무 시간 기준으로 "오늘 지금까지 번 돈"을 계산합니다.
+- `src/lib/useNow.ts` — rAF 기반 시계 훅으로 매 프레임 리렌더하여 카운터가 부드럽게 올라갑니다.
+
+---
+
+made with ☕ and 💸
