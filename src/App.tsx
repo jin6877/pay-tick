@@ -21,6 +21,15 @@ export default function App() {
   const stats = useMemo(() => computeStats(settings, now), [settings, now]);
   const shareRef = useRef<HTMLDivElement>(null);
 
+  // 방문자 OS 감지 -> 맞는 다운로드 버튼 강조
+  const os = useMemo<'mac' | 'windows' | 'other'>(() => {
+    if (typeof navigator === 'undefined') return 'other';
+    const ua = `${navigator.userAgent} ${navigator.platform}`.toLowerCase();
+    if (/mac|iphone|ipad|ipod/.test(ua)) return 'mac';
+    if (/win/.test(ua)) return 'windows';
+    return 'other';
+  }, []);
+
   const flash = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2200);
@@ -109,6 +118,42 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* 데스크톱 위젯 다운로드 */}
+      <section className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.04] p-5">
+        <div className="text-sm font-bold text-emerald-300">🖥️ 데스크톱 위젯으로 받기</div>
+        <p className="mt-1 text-[12px] leading-relaxed text-zinc-400">
+          화면 맨 위에 항상 떠서, 켜두면 번 돈이 실시간으로 차오르는 미니 위젯이에요.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <a
+            href="/downloads/PayTick-mac.dmg"
+            download
+            className={`flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold transition active:scale-[0.98] ${
+              os === 'mac'
+                ? 'bg-gradient-to-r from-emerald-400 to-teal-300 text-zinc-950'
+                : 'border border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10'
+            }`}
+          >
+            🍎 Mac{os === 'mac' && ' · 추천'}
+          </a>
+          <a
+            href="/downloads/PayTick-windows-setup.exe"
+            download
+            className={`flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold transition active:scale-[0.98] ${
+              os === 'windows'
+                ? 'bg-gradient-to-r from-emerald-400 to-teal-300 text-zinc-950'
+                : 'border border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10'
+            }`}
+          >
+            🪟 Windows{os === 'windows' && ' · 추천'}
+          </a>
+        </div>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-zinc-600">
+          ⚠️ 별도 서명이 없는 앱이라, 처음 실행 시 보안 경고가 떠요. <b className="text-zinc-500">맥</b>은
+          앱을 우클릭→"열기", <b className="text-zinc-500">윈도우</b>는 "추가 정보→실행"을 눌러주세요.
+        </p>
+      </section>
 
       <footer className="mt-6 text-center text-[11px] text-zinc-600">
         모든 계산은 브라우저에서만 이뤄지고 어디에도 전송되지 않아요.
