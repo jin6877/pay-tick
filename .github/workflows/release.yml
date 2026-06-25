@@ -1,7 +1,7 @@
 name: Release (Tauri desktop)
 
 # 태그 push (v*) 또는 수동 실행 시 macOS / Windows 데스크톱 위젯을 빌드해
-# GitHub Releases에 .dmg / .msi(.exe) 산출물을 업로드한다.
+# 하나의 GitHub Release에 .dmg / .exe 산출물을 업로드한다.
 on:
   push:
     tags:
@@ -12,7 +12,36 @@ permissions:
   contents: write
 
 jobs:
+  # 먼저 draft 릴리스 하나를 만들고, 빌드 잡들이 같은 릴리스에 업로드한다.
+  # (mac/win 잡이 각자 릴리스를 만들어 중복 draft가 생기던 레이스 방지)
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create draft release
+        id: create
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const refType = process.env.GITHUB_REF_TYPE;
+            const tag = refType === 'tag'
+              ? process.env.GITHUB_REF_NAME
+              : `v0.0.0-run${context.runNumber}`;
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `페이틱 위젯 ${tag}`,
+              body: '실시간 월급 카운터 데스크톱 위젯. macOS는 .dmg, Windows는 .exe를 받으세요.',
+              draft: true,
+              prerelease: false,
+            });
+            core.setOutput('release_id', data.id);
+
   build-tauri:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -51,9 +80,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', github.run_number) }}
-          releaseName: '페이틱 위젯 ${{ github.ref_type == ''tag'' && github.ref_name || github.run_number }}'
-          releaseBody: '실시간 월급 카운터 데스크톱 위젯. macOS는 .dmg, Windows는 .msi/.exe를 받으세요.'
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}

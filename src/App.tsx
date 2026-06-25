@@ -150,8 +150,12 @@ export default function App() {
           </a>
         </div>
         <p className="mt-2.5 text-[11px] leading-relaxed text-zinc-600">
-          ⚠️ 별도 서명이 없는 앱이라, 처음 실행 시 보안 경고가 떠요. <b className="text-zinc-500">맥</b>은
-          앱을 우클릭→"열기", <b className="text-zinc-500">윈도우</b>는 "추가 정보→실행"을 눌러주세요.
+          ⚠️ 서명이 없는 앱이라 처음 실행 시 보안 경고가 떠요.
+          <br />
+          <b className="text-zinc-500">맥</b>: 경고창 "완료" → <b className="text-zinc-500">시스템 설정 → 개인정보 보호 및 보안</b> →
+          아래 "그래도 열기" 클릭. (또는 터미널에 <code className="text-zinc-500">xattr -dr com.apple.quarantine</code> 후 앱 경로)
+          <br />
+          <b className="text-zinc-500">윈도우</b>: "Windows의 PC 보호" 창에서 <b className="text-zinc-500">추가 정보 → 실행</b>.
         </p>
       </section>
 

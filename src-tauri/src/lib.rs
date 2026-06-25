@@ -1,37 +1,13 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager, WebviewUrl, WebviewWindowBuilder,
+    Manager,
 };
-
-/// 메인(풀화면) 설정 창을 열거나 포커스한다. 위젯의 ⚙ 버튼에서 호출.
-#[tauri::command]
-fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(win) = app.get_webview_window("main") {
-        let _ = win.show();
-        let _ = win.unminimize();
-        let _ = win.set_focus();
-        return Ok(());
-    }
-
-    WebviewWindowBuilder::new(&app, "main", WebviewUrl::App("index.html".into()))
-        .title("페이틱 · 설정")
-        .inner_size(420.0, 720.0)
-        .min_inner_size(360.0, 560.0)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(false)
-        .center()
-        .build()
-        .map_err(|e| e.to_string())?;
-    Ok(())
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![open_settings_window])
         .setup(|app| {
             // 위젯 창을 모든 작업공간(스페이스)에 표시하고 확실히 띄운다
             if let Some(widget) = app.get_webview_window("widget") {
@@ -41,11 +17,11 @@ pub fn run() {
                 let _ = widget.set_focus();
             }
 
-            // 트레이 메뉴: 위젯 표시 / 설정 / 종료
+            // 트레이 메뉴: 위젯 보이기 / 종료
+            // (설정은 위젯 안에서 ⚙ 버튼으로 인라인 진입 -> 별도 창을 만들지 않아 멀티윈도우 버그 없음)
             let show_i = MenuItem::with_id(app, "show", "위젯 보이기", true, None::<&str>)?;
-            let settings_i = MenuItem::with_id(app, "settings", "설정 열기", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "종료", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &settings_i, &quit_i])?;
+            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
@@ -58,9 +34,6 @@ pub fn run() {
                             let _ = w.show();
                             let _ = w.set_focus();
                         }
-                    }
-                    "settings" => {
-                        let _ = open_settings_window(app.clone());
                     }
                     "quit" => {
                         app.exit(0);

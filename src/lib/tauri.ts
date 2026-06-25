@@ -47,7 +47,14 @@ export async function hideWidget(): Promise<void> {
   }
 }
 
-/** 메인(설정) 창 열기 */
-export async function openSettings(): Promise<void> {
-  await invoke('open_settings_window');
+/** 위젯 창 크기 조절 (설정 펼침/접힘 시). 브라우저에선 무시. */
+export async function setWidgetSize(width: number, height: number): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    const { LogicalSize } = await import('@tauri-apps/api/dpi');
+    await getCurrentWindow().setSize(new LogicalSize(width, height));
+  } catch {
+    /* ignore */
+  }
 }
