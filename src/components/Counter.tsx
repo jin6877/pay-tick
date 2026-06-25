@@ -10,7 +10,7 @@ const PHASE_BADGE: Record<LiveStats['phase'], { text: string; cls: string }> = {
   before: { text: '아직 출근 전', cls: 'bg-sky-400/15 text-sky-300' },
   working: { text: '근무 중 · 돈 버는 중', cls: 'bg-emerald-400/15 text-emerald-300' },
   lunch: { text: '점심시간 · 카운터 정지', cls: 'bg-orange-400/15 text-orange-300' },
-  after: { text: '오늘 근무 끝! 수고했어요', cls: 'bg-amber-400/15 text-amber-300' },
+  after: { text: '초과근무 · 계속 쌓이는 중', cls: 'bg-fuchsia-400/15 text-fuchsia-300' },
 };
 
 function FloatingMoney({ active }: { active: boolean }) {
@@ -58,9 +58,12 @@ export default function Counter({ stats }: Props) {
   const fun = funConversions(stats.earnedToday);
   const progressPct = Math.round(stats.progress * 100);
 
+  // 점심 외에는 누적이 계속 올라가므로 동전 애니메이션을 유지
+  const earning = stats.phase === 'working' || stats.phase === 'after';
+
   return (
-    <div className="relative flex flex-col items-center gap-6 py-2">
-      <FloatingMoney active={stats.phase === 'working'} />
+    <div className="relative flex flex-col items-center gap-5 py-2">
+      <FloatingMoney active={earning} />
 
       <span
         className={`relative z-10 rounded-full px-3.5 py-1.5 text-xs font-semibold ${badge.cls}`}
@@ -68,26 +71,33 @@ export default function Counter({ stats }: Props) {
         {badge.text}
       </span>
 
-      {/* 메인 카운터 */}
-      <div className="relative z-10 flex flex-col items-center">
-        <span className="mb-1 text-xs font-medium tracking-wide text-zinc-500">
+      {/* 메인 카운터 (HERO) — 누적 총액 */}
+      <div className="relative z-10 flex flex-col items-center py-1">
+        <span className="mb-2 text-[13px] font-semibold tracking-wide text-zinc-400">
           오늘 지금까지 번 돈
         </span>
         <div className="flex items-end justify-center">
-          <span className="tnum money-gradient text-[clamp(2.2rem,9.5vw,3.5rem)] font-black leading-none">
+          <span className="tnum money-gradient text-[clamp(2.9rem,13vw,4.6rem)] font-black leading-[0.95] drop-shadow-[0_0_30px_rgba(251,191,36,0.25)]">
             {formatWon(stats.earnedToday, 2)}
           </span>
-          <span className="mb-1 ml-1 text-xl font-bold text-amber-300/80">원</span>
+          <span className="mb-1.5 ml-1.5 text-2xl font-extrabold text-amber-300/80">원</span>
         </div>
+        {stats.overtimeEarn > 0 && (
+          <span className="mt-2 rounded-full bg-fuchsia-400/10 px-3 py-1 text-xs font-semibold text-fuchsia-300">
+            일급 초과 +{formatWon(stats.overtimeEarn)}원 🔥
+          </span>
+        )}
       </div>
 
       {/* 진행률 */}
       <div className="relative z-10 w-full">
         <div className="mb-1.5 flex items-center justify-between text-xs text-zinc-400">
           <span>오늘 일급 {formatWon(stats.dailyTarget)}원</span>
-          <span className="font-semibold text-amber-300">{progressPct}%</span>
+          <span className="font-semibold text-amber-300">
+            {progressPct}%{stats.overtimeEarn > 0 ? '+' : ''}
+          </span>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-white/5">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/5">
           <div
             className="h-full rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-emerald-400 transition-[width] duration-300"
             style={{ width: `${Math.max(1.5, progressPct)}%` }}
@@ -95,32 +105,31 @@ export default function Counter({ stats }: Props) {
         </div>
       </div>
 
-      {/* per second/minute/hour */}
-      <div className="relative z-10 grid w-full grid-cols-3 gap-2.5">
+      {/* per second/minute/hour — 보조 지표 (작게) */}
+      <div className="relative z-10 flex w-full items-center justify-center gap-1.5 text-xs text-zinc-500">
         {[
           { label: '초당', value: stats.perSec, dec: 2 },
           { label: '분당', value: stats.perMin, dec: 0 },
           { label: '시간당', value: stats.perHour, dec: 0 },
-        ].map((it) => (
-          <div
-            key={it.label}
-            className="rounded-2xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center"
-          >
-            <div className="text-[11px] font-medium text-zinc-500">{it.label}</div>
-            <div className="tnum mt-0.5 text-base font-bold text-zinc-100">
-              {formatWon(it.value, it.dec)}
-            </div>
-            <div className="text-[10px] text-zinc-600">원</div>
-          </div>
+        ].map((it, i) => (
+          <span key={it.label} className="flex items-center gap-1.5">
+            {i > 0 && <span className="text-zinc-700">·</span>}
+            <span>{it.label}</span>
+            <span className="tnum font-semibold text-zinc-300">{formatWon(it.value, it.dec)}원</span>
+          </span>
         ))}
       </div>
 
       {/* 안내 문구 */}
-      {stats.phase === 'working' || stats.phase === 'lunch' ? (
+      {stats.phase === 'working' ? (
         <p className="relative z-10 text-center text-sm leading-relaxed text-zinc-400">
           퇴근까지 <span className="font-semibold text-zinc-200">{formatDuration(stats.remainingMinutes)}</span>{' '}
           남았어요.
           <br />앞으로 <span className="font-bold text-emerald-300">{formatWon(stats.remainingEarn)}원</span> 더 법니다.
+        </p>
+      ) : stats.phase === 'lunch' ? (
+        <p className="relative z-10 text-center text-sm text-zinc-400">
+          점심시간이라 카운터는 잠시 멈췄어요. 식사 후 다시 쌓여요 🍽️
         </p>
       ) : stats.phase === 'before' ? (
         <p className="relative z-10 text-center text-sm text-zinc-400">
@@ -128,8 +137,9 @@ export default function Counter({ stats }: Props) {
           <span className="font-bold text-amber-300">{formatWon(stats.dailyTarget)}원</span> 💪
         </p>
       ) : (
-        <p className="relative z-10 text-center text-sm text-zinc-400">
-          오늘 일당 <span className="font-bold text-amber-300">{formatWon(stats.dailyTarget)}원</span> 완납! 내일 또 만나요 🎉
+        <p className="relative z-10 text-center text-sm leading-relaxed text-zinc-400">
+          정규 근무는 끝났지만 카운터는 멈추지 않아요.
+          <br />켜둘수록 <span className="font-bold text-fuchsia-300">계속 쌓입니다</span> 🔥
         </p>
       )}
 

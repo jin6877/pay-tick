@@ -80,7 +80,10 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ stats }, ref) => {
           </span>
         </div>
         <div style={{ fontSize: 26, color: '#71717a', marginTop: 8 }}>
-          시간당 {formatWon(stats.perHour)}원 · 일급 진행률 {Math.round(stats.progress * 100)}%
+          시간당 {formatWon(stats.perHour)}원
+          {stats.overtimeEarn > 0
+            ? ` · 일급 초과 +${formatWon(stats.overtimeEarn)}원 🔥`
+            : ` · 일급 진행률 ${Math.round(stats.progress * 100)}%`}
         </div>
       </div>
 
