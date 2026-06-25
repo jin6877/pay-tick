@@ -112,6 +112,13 @@ export default function App() {
 
       <footer className="mt-6 text-center text-[11px] text-zinc-600">
         모든 계산은 브라우저에서만 이뤄지고 어디에도 전송되지 않아요.
+        <br />
+        <a
+          href="#/widget"
+          className="mt-1 inline-block text-zinc-500 underline-offset-2 transition hover:text-amber-300 hover:underline"
+        >
+          🪟 데스크톱 위젯 모드 미리보기
+        </a>
       </footer>
 
       {/* 화면 밖 캡처용 카드 */}

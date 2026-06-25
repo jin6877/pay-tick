@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Tauri / Rust
+src-tauri/target
+src-tauri/gen
+src-tauri/app-icon*.png
+# 모바일 아이콘 (데스크톱 타깃에 불필요)
+src-tauri/icons/android
+src-tauri/icons/ios

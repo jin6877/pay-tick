@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "페이틱",
+  "version": "0.1.0",
+  "identifier": "app.paytick.widget",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173/#/widget",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "widget",
+        "title": "페이틱",
+        "url": "index.html#/widget",
+        "width": 240,
+        "height": 112,
+        "minWidth": 200,
+        "minHeight": 96,
+        "maxWidth": 360,
+        "maxHeight": 200,
+        "resizable": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "shadow": false,
+        "visibleOnAllWorkspaces": true,
+        "skipTaskbar": false,
+        "center": false,
+        "x": 80,
+        "y": 80
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Productivity",
+    "shortDescription": "실시간 월급 카운터 위젯",
+    "longDescription": "출근한 순간부터 지금까지 번 누적 금액이 화면 위에 떠서 실시간으로 차오르는 데스크톱 위젯"
+  }
+}

@@ -14,6 +14,14 @@ body,
   -webkit-font-smoothing: antialiased;
 }
 
+/* 위젯(프레임리스 투명 창) 모드: 배경을 비워 둥근 글래스 카드만 보이게 */
+html.widget-mode,
+body.widget-mode,
+.widget-mode #root {
+  background: transparent;
+  overflow: hidden;
+}
+
 /* tabular numbers for the counter so digits don't jitter */
 .tnum {
   font-variant-numeric: tabular-nums;
