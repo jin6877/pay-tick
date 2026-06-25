@@ -66,10 +66,11 @@ export default function Widget() {
         <div className="flex items-center gap-1">
           <button
             onClick={handleGear}
-            aria-label="설정"
-            className="rounded-md px-1 text-xs text-zinc-500 transition hover:text-zinc-200 active:scale-90"
+            aria-label="연봉·근무시간 설정"
+            title="연봉·근무시간 설정"
+            className="rounded-md border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300 transition hover:bg-amber-400/20 active:scale-90"
           >
-            ⚙
+            ⚙ 설정
           </button>
           <button
             onClick={isTauri() ? hideWidget : undefined}
