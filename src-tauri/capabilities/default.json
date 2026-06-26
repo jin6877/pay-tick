@@ -13,6 +13,7 @@
     "core:window:allow-close",
     "core:window:allow-set-position",
     "core:window:allow-set-size",
+    "core:window:allow-center",
     "core:window:allow-set-focus",
     "core:webview:allow-create-webview-window",
     "core:app:allow-app-hide",

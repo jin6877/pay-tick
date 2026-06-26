@@ -4,7 +4,7 @@ import { useLocalStorage } from '../lib/useLocalStorage';
 import { useNow } from '../lib/useNow';
 import { computeStats } from '../lib/salary';
 import { formatWon } from '../lib/format';
-import { closeWidget, hideWidget, setWidgetSize } from '../lib/tauri';
+import { centerWidget, closeWidget, hideWidget, setWidgetSize } from '../lib/tauri';
 import SettingsPanel from './SettingsPanel';
 
 const PHASE_DOT: Record<ReturnType<typeof computeStats>['phase'], string> = {
@@ -38,10 +38,26 @@ export default function Widget() {
   const stats = useMemo(() => computeStats(settings, now), [settings, now]);
 
   // 설정은 별도 창을 띄우지 않고 위젯 안에서 인라인으로 펼친다 (윈도우 멀티윈도우 버그 회피).
-  // 펼침/접힘에 맞춰 Tauri 창 크기를 조절.
+  // 펼침/접힘에 맞춰 Tauri 창 크기를 조절하고, 설정을 펼칠 땐 화면 중앙으로 옮겨
+  // 완료 버튼이 화면 밖으로 나가 갇히는 상황을 막는다.
   useEffect(() => {
-    void setWidgetSize(editing ? PANEL.w : COMPACT.w, editing ? PANEL.h : COMPACT.h);
+    void (async () => {
+      if (editing) {
+        await setWidgetSize(PANEL.w, PANEL.h);
+        await centerWidget();
+      } else {
+        await setWidgetSize(COMPACT.w, COMPACT.h);
+      }
+    })();
   }, [editing]);
+
+  // 금액 글자 크기를 자릿수에 맞춰 반응형으로 (작은 위젯 폭을 넘지 않게 자동 축소)
+  const amountStr = formatWon(stats.earnedToday, 2);
+  const amountFontPx = useMemo(() => {
+    const avail = COMPACT.w - 30; // 좌우 패딩 + "원" 공간 제외한 가용 폭
+    const px = avail / (amountStr.length * 0.56);
+    return Math.max(13, Math.min(27, px));
+  }, [amountStr.length]);
 
   const closeSettings = () => {
     setEditing(false);
@@ -52,13 +68,16 @@ export default function Widget() {
   if (editing) {
     return (
       <div className="flex h-svh w-svw flex-col rounded-[14px] border border-white/10 bg-[#0b0d14] text-zinc-100 shadow-2xl shadow-black/60">
-        {/* 드래그 핸들: 설정 중에도 이 막대를 잡고 위젯 이동 */}
+        {/* 드래그 핸들: 설정 중에도 이 막대를 잡고 위젯 이동 (완료 버튼 갇힘 방지) */}
         <div
           data-tauri-drag-region
-          title="여기를 잡고 이동"
-          className="flex shrink-0 cursor-grab items-center justify-center py-1.5 select-none active:cursor-grabbing"
+          title="여기를 잡고 위젯을 옮길 수 있어요"
+          className="flex shrink-0 cursor-grab items-center justify-center gap-1.5 border-b border-white/5 py-2 select-none active:cursor-grabbing"
         >
-          <span data-tauri-drag-region className="h-1 w-8 rounded-full bg-white/20" />
+          <span data-tauri-drag-region className="h-1 w-10 rounded-full bg-white/25" />
+          <span data-tauri-drag-region className="text-[10px] font-medium text-zinc-500">
+            여기를 잡고 이동
+          </span>
         </div>
         <div className="flex-1 overflow-auto px-3.5 pb-3.5">
           <SettingsPanel settings={settings} onChange={setSettings} onClose={closeSettings} />
@@ -114,9 +133,13 @@ export default function Widget() {
         data-tauri-drag-region
         className="flex flex-1 flex-col items-center justify-center px-1.5 pb-1.5"
       >
-        <div data-tauri-drag-region className="flex items-baseline">
-          <span className="tnum money-gradient text-[clamp(1.05rem,7vw,1.55rem)] font-black leading-none drop-shadow-[0_0_10px_rgba(251,191,36,0.25)]">
-            {formatWon(stats.earnedToday, 2)}
+        <div data-tauri-drag-region className="flex max-w-full items-baseline justify-center">
+          <span
+            data-tauri-drag-region
+            style={{ fontSize: `${amountFontPx}px` }}
+            className="tnum money-gradient font-black leading-none drop-shadow-[0_0_10px_rgba(251,191,36,0.25)]"
+          >
+            {amountStr}
           </span>
           <span className="ml-0.5 text-[10px] font-extrabold text-amber-300/80">원</span>
         </div>

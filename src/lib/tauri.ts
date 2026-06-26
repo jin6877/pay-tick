@@ -58,3 +58,14 @@ export async function setWidgetSize(width: number, height: number): Promise<void
     /* ignore */
   }
 }
+
+/** 위젯을 화면 중앙으로 (설정 펼칠 때 완료 버튼이 화면 밖으로 나가 갇히는 것 방지). */
+export async function centerWidget(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    await getCurrentWindow().center();
+  } catch {
+    /* ignore */
+  }
+}

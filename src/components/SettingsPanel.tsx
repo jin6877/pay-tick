@@ -158,6 +158,10 @@ export default function SettingsPanel({ settings, onChange, onClose }: Props) {
           ))}
         </div>
       </Field>
+
+      <p className="pt-1 text-center text-[11px] text-zinc-600">
+        페이틱 v{__APP_VERSION__}
+      </p>
     </div>
   );
 }
