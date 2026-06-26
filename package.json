@@ -1,11 +1,12 @@
 {
   "name": "pay-tick",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:app": "tsc -b && vite build && node scripts/strip-downloads.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "tauri": "tauri",
