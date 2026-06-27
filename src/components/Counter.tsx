@@ -54,12 +54,16 @@ function FloatingMoney({ active }: { active: boolean }) {
 }
 
 export default function Counter({ stats }: Props) {
-  const badge = PHASE_BADGE[stats.phase];
+  // 퇴근 후 카운터가 멈춘 경우엔 배지 문구를 바꾼다
+  const badge =
+    stats.phase === 'after' && !stats.earning
+      ? { text: '퇴근 완료 · 카운터 정지', cls: 'bg-zinc-400/15 text-zinc-300' }
+      : PHASE_BADGE[stats.phase];
   const fun = funConversions(stats.earnedToday);
   const progressPct = Math.round(stats.progress * 100);
 
-  // 점심 외에는 누적이 계속 올라가므로 동전 애니메이션을 유지
-  const earning = stats.phase === 'working' || stats.phase === 'after';
+  // 실제로 돈이 쌓이는 중일 때만 동전 애니메이션
+  const earning = stats.earning;
 
   return (
     <div className="relative flex flex-col items-center gap-5 py-2">
@@ -84,7 +88,7 @@ export default function Counter({ stats }: Props) {
         </div>
         {stats.overtimeEarn > 0 && (
           <span className="mt-2 rounded-full bg-fuchsia-400/10 px-3 py-1 text-xs font-semibold text-fuchsia-300">
-            일급 초과 +{formatWon(stats.overtimeEarn)}원 🔥
+            초과근무 +{formatWon(stats.overtimeEarn)}원 🔥
           </span>
         )}
       </div>
@@ -136,10 +140,16 @@ export default function Counter({ stats }: Props) {
           출근하면 카운터가 시작돼요. 오늘 목표는{' '}
           <span className="font-bold text-amber-300">{formatWon(stats.dailyTarget)}원</span> 💪
         </p>
+      ) : stats.earning ? (
+        <p className="relative z-10 text-center text-sm leading-relaxed text-zinc-400">
+          정규 근무는 끝났어요. 지금부터는{' '}
+          <span className="font-bold text-fuchsia-300">초과근무 페이</span>로{' '}
+          <span className="tnum font-semibold text-fuchsia-300">시간당 {formatWon(stats.overtimePerSec * 3600)}원</span>씩 쌓여요 🔥
+        </p>
       ) : (
         <p className="relative z-10 text-center text-sm leading-relaxed text-zinc-400">
-          정규 근무는 끝났지만 카운터는 멈추지 않아요.
-          <br />켜둘수록 <span className="font-bold text-fuchsia-300">계속 쌓입니다</span> 🔥
+          정규 근무가 끝나 카운터를 멈췄어요.
+          <br />오늘도 고생했어요 👏
         </p>
       )}
 

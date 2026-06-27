@@ -68,6 +68,22 @@ export interface LiveStats {
   remainingMinutes: number;
   /** 퇴근까지 더 벌 금액 */
   remainingEarn: number;
+  /** 지금 이 순간 돈이 실제로 쌓이고 있는지 (애니메이션·문구 분기용) */
+  earning: boolean;
+  /** 초과근무 시급 적용 중 초당 금액 (초과근무 단계일 때) */
+  overtimePerSec: number;
+}
+
+/**
+ * 정규 퇴근(end) 이후 초과근무 구간의 초당 금액.
+ * - overtimeEnabled: 별도 초과근무 시급으로 계산 (시급과 다른 경우가 많음)
+ * - stopOutsideWork: 근무시간 외엔 멈춤 → 0
+ * - 둘 다 아니면: 기존 동작(정규 초당 비율로 계속 누적)
+ */
+function overtimePerSecond(s: Settings, regularPerSec: number): number {
+  if (s.overtimeEnabled) return Math.max(0, s.overtimeHourly) / 3600;
+  if (s.stopOutsideWork) return 0;
+  return regularPerSec;
 }
 
 /**
@@ -89,10 +105,12 @@ export function computeStats(s: Settings, now: Date): LiveStats {
   const ls = s.excludeLunch ? toMinutes(s.lunchStart) : -1;
   const le = s.excludeLunch ? toMinutes(s.lunchEnd) : -1;
 
+  const otPerSec = overtimePerSecond(s, perSec);
   const base = {
     perSec,
     perMin: perSec * 60,
     perHour: perSec * 3600,
+    overtimePerSec: otPerSec,
   };
 
   // 출근 전
@@ -106,31 +124,37 @@ export function computeStats(s: Settings, now: Date): LiveStats {
       phase: 'before',
       remainingMinutes: workMin,
       remainingEarn: dailyTarget,
+      earning: false,
     };
   }
 
-  // 시작부터 지금까지의 "유효 근무 분" 계산 (점심 제외). 정규 종료 이후엔 계속 누적(초과근무).
-  let elapsedWorkMin = nowMin - start;
-  let isLunch = false;
+  const isAfterEnd = nowMin >= end;
+
+  // ── 정규 근무 구간(start ~ min(now, end)) 유효 분 (점심 제외) ──
+  const regNow = Math.min(nowMin, end);
+  let regularMin = regNow - start;
   if (s.excludeLunch && le > ls) {
-    if (nowMin >= le) {
-      // 점심 끝난 뒤 -> 점심 통째로 제외
-      elapsedWorkMin -= le - ls;
-    } else if (nowMin >= ls) {
-      // 점심 중 -> 점심 시작 직전까지만, 카운터 정지
-      elapsedWorkMin = ls - start;
-      isLunch = true;
+    if (regNow >= le) {
+      regularMin -= le - ls; // 점심 통째로 제외
+    } else if (regNow >= ls) {
+      regularMin = ls - start; // 점심 직전까지만
     }
   }
-  elapsedWorkMin = Math.max(0, elapsedWorkMin);
+  regularMin = Math.max(0, regularMin);
+  const regularEarn = perSec * regularMin * 60;
 
-  // 누적 금액: 정규 일급에서 cap 하지 않고 계속 상승
-  const earnedToday = perSec * elapsedWorkMin * 60;
+  // 점심 중인지(정규 종료 전, 점심 시간대)
+  const isLunch = !isAfterEnd && s.excludeLunch && le > ls && nowMin >= ls && nowMin < le;
 
-  // 정규 종료 이후면 초과근무 단계 (그래도 누적은 계속 올라감)
-  const isAfterEnd = nowMin >= end;
-  const overtimeEarn = Math.max(0, earnedToday - dailyTarget);
-  const remainingMinutes = isAfterEnd ? 0 : Math.max(0, workMin - elapsedWorkMin);
+  // ── 초과근무 구간(end 이후) ──
+  const overtimeMin = isAfterEnd ? nowMin - end : 0;
+  const overtimeEarn = otPerSec * overtimeMin * 60;
+
+  const earnedToday = regularEarn + overtimeEarn;
+  const remainingMinutes = isAfterEnd ? 0 : Math.max(0, workMin - regularMin);
+
+  // 실제로 돈이 쌓이는 중인가
+  const earning = isAfterEnd ? otPerSec > 0 : !isLunch;
 
   return {
     ...base,
@@ -140,6 +164,7 @@ export function computeStats(s: Settings, now: Date): LiveStats {
     overtimeEarn,
     phase: isLunch ? 'lunch' : isAfterEnd ? 'after' : 'working',
     remainingMinutes,
-    remainingEarn: Math.max(0, dailyTarget - earnedToday),
+    remainingEarn: Math.max(0, dailyTarget - regularEarn),
+    earning,
   };
 }

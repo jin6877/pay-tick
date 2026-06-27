@@ -141,6 +141,56 @@ export default function SettingsPanel({ settings, onChange, onClose }: Props) {
         )}
       </div>
 
+      {/* 근무시간 외 정지 */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-3.5">
+        <label className="flex cursor-pointer items-start justify-between gap-3">
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-zinc-200">근무시간 외엔 멈추기</span>
+            <span className="text-[11px] leading-snug text-zinc-500">
+              정규 퇴근 시각이 지나면 카운터를 멈춰요.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={settings.stopOutsideWork}
+            onChange={(e) => update({ stopOutsideWork: e.target.checked })}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-amber-400"
+          />
+        </label>
+      </div>
+
+      {/* 초과근무 페이 */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-3.5">
+        <label className="flex cursor-pointer items-start justify-between gap-3">
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-zinc-200">초과근무 페이 발생</span>
+            <span className="text-[11px] leading-snug text-zinc-500">
+              정규 퇴근 이후엔 초과근무 시급으로 따로 쌓여요.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={settings.overtimeEnabled}
+            onChange={(e) => update({ overtimeEnabled: e.target.checked })}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-amber-400"
+          />
+        </label>
+        {settings.overtimeEnabled && (
+          <div className="mt-3">
+            <Field label="초과근무 시급 (원)">
+              <input
+                type="number"
+                inputMode="numeric"
+                value={settings.overtimeHourly || ''}
+                onChange={(e) => update({ overtimeHourly: Number(e.target.value) || 0 })}
+                className={`${inputCls} tnum text-base`}
+                placeholder="예: 시급의 1.5배"
+              />
+            </Field>
+          </div>
+        )}
+      </div>
+
       <Field label="주 근무일">
         <div className="grid grid-cols-7 gap-1.5">
           {[1, 2, 3, 4, 5, 6, 7].map((d) => (
